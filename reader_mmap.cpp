@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdexcept>
 #include <unistd.h>
+#include <utility>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -27,33 +28,29 @@ namespace nanoparser {
         data_ = static_cast<char*>(
             mmap(nullptr, size_, PROT_READ, MAP_PRIVATE, fd, 0)
         );
-        madvise(data_, size_, MADV_SEQUENTIAL);
         close(fd);
         if (data_ == MAP_FAILED)
             throw std::runtime_error("mmap failed");
+        madvise(data_, size_, MADV_SEQUENTIAL);
     }
 
-    ItchFeedReaderMmap::ItchFeedReaderMmap(ItchFeedReaderMmap&& other) noexcept {
-        data_ = other.data_;
-        size_ = other.size_;
-        offset_ = other.offset_;
-        other.data_ = nullptr;
-        other.size_ = 0;
-        other.offset_ = 0;
+    ItchFeedReaderMmap::ItchFeedReaderMmap(ItchFeedReaderMmap&& other) noexcept : data_{}, size_{}, offset_{} {
+        move_from(other);
     }
 
     ItchFeedReaderMmap& ItchFeedReaderMmap::operator=(ItchFeedReaderMmap&& other) noexcept {
         if (this != &other) {
             if (data_ != nullptr)
                 munmap(data_, size_);
-            data_ = other.data_;
-            size_ = other.size_;
-            offset_ = other.offset_;
-            other.data_ = nullptr;
-            other.size_ = 0;
-            other.offset_ = 0;
+            move_from(other);
         }
         return *this;
+    }
+
+    void ItchFeedReaderMmap::move_from(ItchFeedReaderMmap& other) {
+        data_ = std::exchange(other.data_, nullptr);
+        size_ = std::exchange(other.size_, 0);
+        offset_ = std::exchange(other.offset_, 0);
     }
 
     std::span<const char> ItchFeedReaderMmap::read() {

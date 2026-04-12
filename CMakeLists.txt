@@ -17,10 +17,9 @@ set(SOURCES
         moldudp64.cpp
         networking.hpp
         networking.cpp
-        reader.hpp
-        reader.cpp
+        reader_stream.hpp
+        reader_stream.cpp
         replayer.hpp
-        replayer.cpp
         time.hpp
         time.cpp
         reader_mmap.hpp

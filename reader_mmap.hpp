@@ -19,5 +19,7 @@ namespace nanoparser {
         char* data_;
         size_t size_;
         size_t offset_;
+
+        void move_from(ItchFeedReaderMmap& other);
     };
 }
