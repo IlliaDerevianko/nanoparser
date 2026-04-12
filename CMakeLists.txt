@@ -23,6 +23,8 @@ set(SOURCES
         replayer.cpp
         time.hpp
         time.cpp
+        reader_mmap.hpp
+        reader_mmap.cpp
 )
 
 add_executable(replay ${SOURCES})
