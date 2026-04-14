@@ -27,7 +27,7 @@ namespace nanoparser {
 
         [[nodiscard]] bool empty() const;
 
-        uint16_t send(UDPsocket& udp_socket);
+        uint16_t send(UDPSender& udp_sender);
 
     private:
         char* buf_;

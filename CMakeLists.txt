@@ -27,6 +27,14 @@ set(SOURCES
 )
 
 add_executable(replay ${SOURCES})
+add_executable(receive
+        receiver.cpp
+        itch.hpp
+        itch.cpp
+        moldudp64.hpp
+        moldudp64.cpp
+        networking.hpp
+        networking.cpp)
 
 target_compile_options(replay PRIVATE
         -Wall

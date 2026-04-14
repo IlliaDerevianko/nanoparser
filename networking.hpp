@@ -8,14 +8,14 @@ namespace nanoparser::networking{
 }
 
 namespace nanoparser {
-    class UDPsocket {
+    class UDPSender {
     public:
-        UDPsocket(std::string_view ip_addr, uint16_t port);
-        UDPsocket(UDPsocket&&) noexcept ;
-        UDPsocket& operator=(UDPsocket&&) noexcept;
-        UDPsocket(const UDPsocket&) = delete;
-        UDPsocket& operator=(const UDPsocket&) = delete;
-        ~UDPsocket();
+        UDPSender(std::string_view ip_addr, uint16_t port);
+        UDPSender(UDPSender&&) noexcept ;
+        UDPSender& operator=(UDPSender&&) noexcept;
+        UDPSender(const UDPSender&) = delete;
+        UDPSender& operator=(const UDPSender&) = delete;
+        ~UDPSender();
         ssize_t send(std::span<const char> buf);
 
     private:

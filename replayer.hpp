@@ -21,7 +21,7 @@ namespace nanoparser {
     public:
         explicit Replayer(const std::string& data_src_path, const ReplayerConfig& config = ReplayerConfig{})
             : reader_(data_src_path)
-            , socket_(config.ip, config.port)
+            , udp_sender_(config.ip, config.port)
             , max_inter_packet_interval_(config.max_inter_packet_interval)
             , first_timestamp_{}
             , start_time_{}
@@ -42,6 +42,10 @@ namespace nanoparser {
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
                 if (timestamp > end)
                     break;
+                // send as soon as the MoldUDP64 packet is full (current message doesn't fit)
+                if (mold_udp64_packet_.bytes_remaining() < msg.size() && !mold_udp64_packet_.empty()) {
+                    send();
+                }
                 uint64_t now{};
                 // spin until this ITCH message has to be sent
                 while ((now = time::get_time_ns()) - start_time_ < timestamp - first_timestamp_) {
@@ -49,10 +53,6 @@ namespace nanoparser {
                     if (now - last_sent_time_ > max_inter_packet_interval_ && !mold_udp64_packet_.empty()) {
                         send();
                     }
-                }
-                // send as soon as the MoldUDP64 packet is full
-                if (mold_udp64_packet_.bytes_remaining() < msg.size() && !mold_udp64_packet_.empty()) {
-                    send();
                 }
 
                 mold_udp64_packet_.append_msg({msg.data(), msg.size()});
@@ -64,7 +64,7 @@ namespace nanoparser {
 
     private:
         Reader reader_;
-        UDPsocket socket_;
+        UDPSender udp_sender_;
         uint64_t max_inter_packet_interval_;
         uint64_t first_timestamp_;
         uint64_t start_time_;
@@ -89,7 +89,7 @@ namespace nanoparser {
 
         void send() {
             mold_udp64_packet_.set_seq_num(seq_num_);
-            auto sent = mold_udp64_packet_.send(socket_);
+            auto sent = mold_udp64_packet_.send(udp_sender_);
             seq_num_ += sent;
             last_sent_time_ = time::get_time_ns();
         }

@@ -8,7 +8,7 @@ namespace nanoparser::time {
     constexpr unsigned hrs_to_mins = 60;
 
     uint64_t get_time_ns();
-    uint64_t hh_mm_to_ns_after_midnight(unsigned hh, unsigned mm);
+    uint64_t hh_mm_ss_to_ns_after_midnight(unsigned hh, unsigned mm, unsigned ss = 0);
 }
 
 

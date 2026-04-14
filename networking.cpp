@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 namespace nanoparser {
-    UDPsocket::UDPsocket(const std::string_view ip_addr, const uint16_t port) : sockfd_(-1), addr_{} {
+    UDPSender::UDPSender(const std::string_view ip_addr, const uint16_t port) : sockfd_(-1), addr_{} {
 
         sockfd_ = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -30,14 +30,14 @@ namespace nanoparser {
         addr_.sin_port = htons(port);
     }
 
-    UDPsocket::UDPsocket(UDPsocket&& other) noexcept
+    UDPSender::UDPSender(UDPSender&& other) noexcept
         : sockfd_(other.sockfd_)
         , addr_(other.addr_)
     {
         other.sockfd_ = -1;
     }
 
-    UDPsocket &UDPsocket::operator=(UDPsocket&& other) noexcept {
+    UDPSender &UDPSender::operator=(UDPSender&& other) noexcept {
         if (this != &other) {
             if (sockfd_ >= 0) close(sockfd_);
             sockfd_ = other.sockfd_;
@@ -47,12 +47,12 @@ namespace nanoparser {
         return *this;
     }
 
-    UDPsocket::~UDPsocket() {
+    UDPSender::~UDPSender() {
         if (sockfd_ >= 0)
             close(sockfd_);
     }
 
-    ssize_t UDPsocket::send(std::span<const char> buf) {
+    ssize_t UDPSender::send(std::span<const char> buf) {
         return sendto(
             sockfd_,
             buf.data(),
