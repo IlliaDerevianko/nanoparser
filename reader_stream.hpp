@@ -9,6 +9,7 @@ namespace nanoparser {
         explicit ItchFeedReaderStream(const std::string& path);
 
         std::span<const char> read();
+        void prefetch();
 
     private:
         std::ifstream file_;

@@ -14,10 +14,12 @@ namespace nanoparser {
         ~ItchFeedReaderMmap();
 
         std::span<const char> read();
+        void prefetch();
 
     private:
-        char* data_;
-        size_t size_;
+        static constexpr size_t kMemLockMaxSize = 1 << 25;
+        std::span<char> contents;
+        std::span<char> locked_;
         size_t offset_;
 
         void move_from(ItchFeedReaderMmap& other);

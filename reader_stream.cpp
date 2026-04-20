@@ -26,4 +26,8 @@ namespace nanoparser {
             throw std::runtime_error("Itch feed file is malformed");
         return {buf_.data(), static_cast<uint16_t>(msg_len_le + Itch::kMessageLengthSize)};
     }
+
+    void ItchFeedReaderStream::prefetch() {
+        // no-op
+    }
 }
