@@ -1,10 +1,18 @@
 #include <fstream>
 #include <string>
+#include <sched.h>
 
 #include "replayer.hpp"
 #include "time.hpp"
 
 int main() {
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    CPU_SET(3, &set);
+    sched_setaffinity(0, sizeof(set), &set);
+
+    sched_param param = { .sched_priority = 99 };
+    sched_setscheduler(0, SCHED_FIFO, &param);
     const std::string kHistoricalDataPath =
         "/home/illiaderevianko/Desktop/projects/nanoparser/data/01302019.NASDAQ_ITCH50";
 
