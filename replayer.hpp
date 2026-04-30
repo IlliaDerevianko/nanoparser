@@ -44,6 +44,8 @@ namespace nanoparser {
             start_time_ = time::get_time_ns();
             last_sent_time_ = start_time_;
 
+            uint64_t last_msg_timestamp = first_timestamp_;
+
             std::span<const char> msg{};
             while (!(msg = reader_.read()).empty()) {
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
@@ -53,7 +55,7 @@ namespace nanoparser {
                 if (mold_udp64_packet_.bytes_remaining() < msg.size() && !mold_udp64_packet_.empty()) {
                     send();
                     // TRACING
-                    ideal_times_.push_back(timestamp);
+                    ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
                 }
                 uint64_t now{};
                 // spin until this ITCH message has to be sent
@@ -62,17 +64,18 @@ namespace nanoparser {
                     if (now - last_sent_time_ > max_inter_packet_interval_ && !mold_udp64_packet_.empty()) {
                         send();
                         // TRACING
-                        ideal_times_.push_back(timestamp);
+                        ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
                     }
                 }
 
                 mold_udp64_packet_.append_msg({msg.data(), msg.size()});
+                last_msg_timestamp = timestamp;
             }
             // send the leftover ITCH messages
             if (!mold_udp64_packet_.empty())
                 send();
             // TRACING
-            send_times_.pop_back();
+            ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
             dump_send_times();
         }
 
