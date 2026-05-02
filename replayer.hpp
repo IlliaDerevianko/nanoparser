@@ -72,10 +72,12 @@ namespace nanoparser {
                 last_msg_timestamp = timestamp;
             }
             // send the leftover ITCH messages
-            if (!mold_udp64_packet_.empty())
+            if (!mold_udp64_packet_.empty()) {
                 send();
-            // TRACING
-            ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
+                // TRACING
+                ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
+            }
+
             dump_send_times();
         }
 
