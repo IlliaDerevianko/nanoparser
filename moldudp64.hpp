@@ -15,11 +15,11 @@ namespace nanoparser {
         static constexpr uint16_t kMaxSize = networking::kMaxUdpPayload;
         static constexpr uint16_t kMaxPayload = kMaxSize - kHeaderSize;
 
-        MoldUDP64Packet(char* buf);
+        MoldUDP64Packet();
 
-        void set_session(std::span<const char, 10> id) const;
+        void set_session(std::span<const char, 10> id);
 
-        void set_seq_num(uint64_t seq_num) const;
+        void set_seq_num(uint64_t seq_num);
 
         void append_msg(std::span<const char> msg_buf);
 
@@ -30,7 +30,7 @@ namespace nanoparser {
         uint16_t send(UDPSender& udp_sender);
 
     private:
-        char* buf_;
+        std::array<char, kMaxSize> buf_;
         uint16_t msg_cnt_;
         uint16_t size_;
     };

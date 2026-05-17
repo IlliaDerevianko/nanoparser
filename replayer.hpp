@@ -28,8 +28,6 @@ namespace nanoparser {
             , start_time_{}
             , last_sent_time_{}
             , seq_num_(0)
-            , packet_buf_{}
-            , mold_udp64_packet_(packet_buf_)
         {
             constexpr std::array kSession = {'0', '1', '3', '0', '2', '0', '1', '9', ' ', ' '};
             mold_udp64_packet_.set_session(kSession);
@@ -89,7 +87,6 @@ namespace nanoparser {
         uint64_t start_time_;
         uint64_t last_sent_time_;
         uint64_t seq_num_;
-        char packet_buf_[MoldUDP64Packet::kMaxSize];
         MoldUDP64Packet mold_udp64_packet_;
         // TRACING
         std::vector<uint64_t> send_times_;
