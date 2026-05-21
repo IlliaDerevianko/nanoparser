@@ -1,5 +1,6 @@
 #include "reader_mmap.hpp"
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <fcntl.h>

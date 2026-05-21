@@ -1,5 +1,6 @@
 #include "reader_stream.hpp"
 
+#include <bit>
 #include <fstream>
 #include <stdexcept>
 

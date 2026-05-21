@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <limits>
 #include <string>
 #include <vector>
@@ -33,7 +34,6 @@ namespace nanoparser {
             mold_udp64_packet_.set_session(kSession);
             // TRACING
             send_times_.reserve(20'000);
-            ideal_times_.reserve(20'000);
         }
 
         void replay(uint64_t start = 0, uint64_t end = std::numeric_limits<uint64_t>::max()) {
@@ -41,8 +41,6 @@ namespace nanoparser {
             reader_.prefetch();
             start_time_ = time::get_time_ns();
             last_sent_time_ = start_time_;
-
-            uint64_t last_msg_timestamp = first_timestamp_;
 
             std::span<const char> msg{};
             while (!(msg = reader_.read()).empty()) {
@@ -52,8 +50,6 @@ namespace nanoparser {
                 // send as soon as the MoldUDP64 packet is full (current message doesn't fit)
                 if (mold_udp64_packet_.bytes_remaining() < msg.size() && !mold_udp64_packet_.empty()) {
                     send();
-                    // TRACING
-                    ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
                 }
                 uint64_t now{};
                 // spin until this ITCH message has to be sent
@@ -61,19 +57,14 @@ namespace nanoparser {
                     // send if the maximum inter-packet interval is exceeded
                     if (now - last_sent_time_ > max_inter_packet_interval_ && !mold_udp64_packet_.empty()) {
                         send();
-                        // TRACING
-                        ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
                     }
                 }
 
                 mold_udp64_packet_.append_msg({msg.data(), msg.size()});
-                last_msg_timestamp = timestamp;
             }
             // send the leftover ITCH messages
             if (!mold_udp64_packet_.empty()) {
                 send();
-                // TRACING
-                ideal_times_.push_back(last_msg_timestamp - first_timestamp_ + start_time_);
             }
 
             dump_send_times();
@@ -122,6 +113,7 @@ namespace nanoparser {
                     static_cast<std::streamsize>(send_times_.size() * sizeof(uint64_t)));
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
+        std::cout << send_times_.size() << std::endl;
         }
     };
 }

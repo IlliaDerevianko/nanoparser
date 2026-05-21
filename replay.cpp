@@ -6,19 +6,22 @@
 #include "time.hpp"
 
 int main() {
-    cpu_set_t set;
-    CPU_ZERO(&set);
-    CPU_SET(3, &set);
-    sched_setaffinity(0, sizeof(set), &set);
+    #ifdef __linux__
+        cpu_set_t set;
+        CPU_ZERO(&set);
+        CPU_SET(3, &set);
+        sched_setaffinity(0, sizeof(set), &set);
 
-    sched_param param = { .sched_priority = 99 };
-    sched_setscheduler(0, SCHED_FIFO, &param);
+        sched_param param = { .sched_priority = 99 };
+        sched_setscheduler(0, SCHED_FIFO, &param);
+    #endif
+
     const std::string kHistoricalDataPath =
-        "/home/illiaderevianko/Desktop/projects/nanoparser/data/01302019.NASDAQ_ITCH50";
+        "/Users/illiaderevianko/Desktop/c++/nanoparser/data/01302019.NASDAQ_ITCH50";
 
     nanoparser::Replayer<nanoparser::ItchFeedReaderMmap> replayer(kHistoricalDataPath);
-    const auto period_start = nanoparser::time::hh_mm_ss_to_ns_after_midnight(16, 00, 00);
-    const auto period_end = nanoparser::time::hh_mm_ss_to_ns_after_midnight(16, 00, 01);
+    const auto period_start = nanoparser::time::hh_mm_ss_to_ns_after_midnight(4, 0, 0);
+    const auto period_end = nanoparser::time::hh_mm_ss_to_ns_after_midnight(4, 0, 1);
     replayer.replay(period_start, period_end);
     return 0;
 }
