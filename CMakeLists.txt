@@ -17,6 +17,7 @@ set(SOURCES
         moldudp64.cpp
         networking.hpp
         networking.cpp
+        reader_checkpoint.hpp
         reader_stream.hpp
         reader_stream.cpp
         replayer.hpp
@@ -24,6 +25,7 @@ set(SOURCES
         time.cpp
         reader_mmap.hpp
         reader_mmap.cpp
+        read_result.hpp
 )
 
 add_executable(replay ${SOURCES})

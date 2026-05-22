@@ -42,8 +42,9 @@ namespace nanoparser {
             start_time_ = time::get_time_ns();
             last_sent_time_ = start_time_;
 
-            std::span<const char> msg{};
-            while (!(msg = reader_.read()).empty()) {
+            ReadResult<Reader> read_res;
+            while (!(read_res = reader_.read()).empty()) {
+                auto [msg, _] = read_res;
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
                 if (timestamp > end)
                     break;
@@ -84,9 +85,10 @@ namespace nanoparser {
         std::vector<uint64_t> ideal_times_;
 
         void consume_first_msg_after(uint64_t start) {
-            std::span<const char> msg{};
+            ReadResult<Reader> read_res;
 
-            while (!(msg = reader_.read()).empty()) {
+            while (!(read_res = reader_.read()).empty()) {
+                auto [msg, _] = read_res;
                 if (uint64_t timestamp = Itch::get_timestamp(msg.data()); timestamp >= start) {
                     first_timestamp_ = timestamp;
                     mold_udp64_packet_.append_msg({msg.data(), msg.size()});
@@ -113,7 +115,7 @@ namespace nanoparser {
                     static_cast<std::streamsize>(send_times_.size() * sizeof(uint64_t)));
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
-        std::cout << send_times_.size() << std::endl;
+            std::cout << send_times_.size() << std::endl;
         }
     };
 }

@@ -15,7 +15,10 @@
 
 
 namespace nanoparser {
-    ItchFeedReaderMmap::ItchFeedReaderMmap(const std::string& path) : offset_(0) {
+    ItchFeedReaderMmap::ItchFeedReaderMmap(const std::string& path)
+        : offset_(0)
+        , sentinel_(std::make_shared<int>(0))
+    {
         int fd = open(path.c_str(), O_RDONLY);
         if (fd == -1)
             throw std::runtime_error("Failed to open the file");
@@ -43,8 +46,8 @@ namespace nanoparser {
 
     ItchFeedReaderMmap& ItchFeedReaderMmap::operator=(ItchFeedReaderMmap&& other) noexcept {
         if (this != &other) {
-            if (!locked_.empty())
-                munlock(locked_.data(), locked_.size());
+            if (!mem_locked_.empty())
+                munlock(mem_locked_.data(), mem_locked_.size());
             if (!contents.empty())
                 munmap(contents.data(), contents.size());
             move_from(other);
@@ -53,13 +56,13 @@ namespace nanoparser {
     }
 
     ItchFeedReaderMmap::~ItchFeedReaderMmap() {
-        if (!locked_.empty())
-            munlock(locked_.data(), locked_.size());
+        if (!mem_locked_.empty())
+            munlock(mem_locked_.data(), mem_locked_.size());
         if (!contents.empty())
             munmap(contents.data(), contents.size());
     }
 
-    std::span<const char> ItchFeedReaderMmap::read() {
+    ReadResult<ItchFeedReaderMmap> ItchFeedReaderMmap::read() {
         if (offset_ == contents.size())
             return {};
         if (contents.size() - offset_ < Itch::kMessageLengthSize)
@@ -75,7 +78,10 @@ namespace nanoparser {
             throw std::runtime_error("Itch feed file is malformed");
         offset_ += msg_len_le;
 
-        return {contents.data() + offset_old, static_cast<uint16_t>(msg_len_le + Itch::kMessageLengthSize)};
+        ReaderCheckpoint<ItchFeedReaderMmap> checkpoint(offset_, sentinel_);
+        std::span<const char> data(contents.data() + offset_old,
+            static_cast<uint16_t>(msg_len_le + Itch::kMessageLengthSize));
+        return {data, checkpoint};
     }
 
     void ItchFeedReaderMmap::prefetch() {
@@ -93,12 +99,23 @@ namespace nanoparser {
             std::cout << "Failed to memlock" << std::endl;
             return;
         }
-        locked_ = std::span{aligned, size};
+        mem_locked_ = std::span{aligned, size};
     }
+
+    void ItchFeedReaderMmap::seek(ReaderCheckpoint<ItchFeedReaderMmap> checkpoint) {
+        if (!checkpoint.is_valid())
+            throw std::runtime_error("Use of checkpoint issued by a freed reader");
+        if (checkpoint.sentinel_.lock() != sentinel_)
+            throw std::runtime_error("Use of checkpoint issued by a different reader");
+
+        offset_ = checkpoint.offset_;
+    }
+
 
     void ItchFeedReaderMmap::move_from(ItchFeedReaderMmap& other) {
         offset_ = std::exchange(other.offset_, 0);
         contents = std::exchange(other.contents, std::span<char>{});
-        locked_ = std::exchange(other.locked_, std::span<char>{});
+        mem_locked_ = std::exchange(other.mem_locked_, std::span<char>{});
+        sentinel_ = std::exchange(other.sentinel_, std::shared_ptr<void>{});
     }
 }

@@ -4,17 +4,21 @@
 #include <span>
 
 #include "itch.hpp"
+#include "read_result.hpp"
 
 namespace nanoparser {
     class ItchFeedReaderStream {
     public:
+        using Position = std::streampos;
         explicit ItchFeedReaderStream(const std::string& path);
 
-        std::span<const char> read();
+        ReadResult<ItchFeedReaderStream> read();
         void prefetch();
+        void seek(ReaderCheckpoint<ItchFeedReaderStream> checkpoint);
 
     private:
         std::ifstream file_;
         std::array<char, Itch::kMaxPacketSize> buf_;
+        std::shared_ptr<void> sentinel_;
     };
 }
