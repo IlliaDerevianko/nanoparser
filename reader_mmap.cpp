@@ -111,6 +111,11 @@ namespace nanoparser {
         offset_ = checkpoint.offset_;
     }
 
+    ReaderCheckpoint<ItchFeedReaderMmap> ItchFeedReaderMmap::get_begin_checkpoint() const {
+        return {0, sentinel_};
+    }
+
+
 
     void ItchFeedReaderMmap::move_from(ItchFeedReaderMmap& other) {
         offset_ = std::exchange(other.offset_, 0);

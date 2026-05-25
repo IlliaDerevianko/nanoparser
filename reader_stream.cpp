@@ -12,6 +12,7 @@ namespace nanoparser {
         : file_(path.c_str(), std::ios::binary)
         , buf_{}
         , sentinel_(std::make_shared<int>(0))
+        , begin_(file_.tellg())
     {
         if (!file_.is_open())
             throw std::runtime_error("Failed to open the file");
@@ -44,4 +45,9 @@ namespace nanoparser {
         file_.seekg(checkpoint.offset_);
 
     }
+
+    ReaderCheckpoint<ItchFeedReaderStream> ItchFeedReaderStream::get_begin_checkpoint() const {
+        return {begin_, sentinel_};
+    }
+
 }

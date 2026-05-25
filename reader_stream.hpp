@@ -15,10 +15,12 @@ namespace nanoparser {
         ReadResult<ItchFeedReaderStream> read();
         void prefetch();
         void seek(ReaderCheckpoint<ItchFeedReaderStream> checkpoint);
+        [[nodiscard]] ReaderCheckpoint<ItchFeedReaderStream> get_begin_checkpoint() const;
 
     private:
         std::ifstream file_;
         std::array<char, Itch::kMaxPacketSize> buf_;
         std::shared_ptr<void> sentinel_;
+        Position begin_;
     };
 }

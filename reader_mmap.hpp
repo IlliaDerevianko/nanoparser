@@ -20,6 +20,7 @@ namespace nanoparser {
         ReadResult<ItchFeedReaderMmap> read();
         void prefetch();
         void seek(ReaderCheckpoint<ItchFeedReaderMmap> checkpoint);
+        [[nodiscard]] ReaderCheckpoint<ItchFeedReaderMmap> get_begin_checkpoint() const;
 
     private:
         static constexpr size_t kMemLockMaxSize = 1 << 25;

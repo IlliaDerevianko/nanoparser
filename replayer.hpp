@@ -29,11 +29,13 @@ namespace nanoparser {
             , start_time_{}
             , last_sent_time_{}
             , seq_num_(0)
+            , first_msg_checkpoint_(reader_.get_begin_checkpoint())
         {
             constexpr std::array kSession = {'0', '1', '3', '0', '2', '0', '1', '9', ' ', ' '};
             mold_udp64_packet_.set_session(kSession);
             // TRACING
             send_times_.reserve(20'000);
+            ideal_times_.reserve(20'000);
         }
 
         void replay(uint64_t start = 0, uint64_t end = std::numeric_limits<uint64_t>::max()) {
@@ -80,6 +82,7 @@ namespace nanoparser {
         uint64_t last_sent_time_;
         uint64_t seq_num_;
         MoldUDP64Packet mold_udp64_packet_;
+        ReaderCheckpoint<Reader> first_msg_checkpoint_;
         // TRACING
         std::vector<uint64_t> send_times_;
         std::vector<uint64_t> ideal_times_;
@@ -88,12 +91,13 @@ namespace nanoparser {
             ReadResult<Reader> read_res;
 
             while (!(read_res = reader_.read()).empty()) {
-                auto [msg, _] = read_res;
+                auto [msg, checkpoint] = read_res;
                 if (uint64_t timestamp = Itch::get_timestamp(msg.data()); timestamp >= start) {
                     first_timestamp_ = timestamp;
-                    mold_udp64_packet_.append_msg({msg.data(), msg.size()});
+                    mold_udp64_packet_.append_msg(msg);
                     return;
                 }
+                first_msg_checkpoint_ = checkpoint;
             }
         }
 
