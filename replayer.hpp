@@ -13,7 +13,7 @@
 
 namespace nanoparser {
     struct ReplayerConfig {
-        uint64_t max_inter_packet_interval = 10'000'000;
+        uint64_t max_msg_delay = 10'000'000;
         std::string ip = "239.0.0.1";
         std::uint16_t port = 12345;
     };
@@ -24,10 +24,8 @@ namespace nanoparser {
         explicit Replayer(const std::string& data_src_path, const ReplayerConfig& config = ReplayerConfig{})
             : reader_(data_src_path)
             , udp_sender_(config.ip, config.port)
-            , max_inter_packet_interval_(config.max_inter_packet_interval)
-            , first_timestamp_{}
-            , start_time_{}
-            , last_sent_time_{}
+            , max_msg_delay_(config.max_msg_delay)
+            , first_msg_timestamp_{}
             , seq_num_(0)
             , first_msg_checkpoint_(reader_.get_begin_checkpoint())
         {
@@ -39,47 +37,53 @@ namespace nanoparser {
         }
 
         void replay(uint64_t start = 0, uint64_t end = std::numeric_limits<uint64_t>::max()) {
-            consume_first_msg_after(start);
+            seek_to_first_from(start);
+            record_ideal_times(end);
             reader_.prefetch();
-            start_time_ = time::get_time_ns();
-            last_sent_time_ = start_time_;
 
             ReadResult<Reader> read_res;
+            uint64_t first_msg_in_packet_time{}; // the value is only meaningful if the packet is non-empty
+            uint64_t start_time = time::get_time_ns();
+
             while (!(read_res = reader_.read()).empty()) {
                 auto [msg, _] = read_res;
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
-                if (timestamp > end)
-                    break;
-                // send as soon as the MoldUDP64 packet is full (current message doesn't fit)
-                if (mold_udp64_packet_.bytes_remaining() < msg.size() && !mold_udp64_packet_.empty()) {
-                    send();
-                }
+                // force the replayer to stop early if the message's timestamp is after the end
+                auto target_timestamp = std::min(timestamp, end);
                 uint64_t now{};
-                // spin until this ITCH message has to be sent
-                while ((now = time::get_time_ns()) - start_time_ < timestamp - first_timestamp_) {
-                    // send if the maximum inter-packet interval is exceeded
-                    if (now - last_sent_time_ > max_inter_packet_interval_ && !mold_udp64_packet_.empty()) {
+                // spin until this message is ready to be sent
+                while ((now = time::get_time_ns()) - start_time < target_timestamp - first_msg_timestamp_) {
+                    // send the packet if the maximum message delay time (due to coalescing) is exceeded
+                    if (!mold_udp64_packet_.empty() && now - first_msg_in_packet_time > max_msg_delay_) {
                         send();
                     }
                 }
+                // although this exit condition could be placed before the busy waiting loop, placing it here
+                // ensures that the factual replay time is closer to (end - start)
+                if (timestamp > end)
+                    break;
+                // send the packet if the current message causes an overflow
+                if (!mold_udp64_packet_.empty() && mold_udp64_packet_.bytes_remaining() < msg.size()) {
+                    send();
+                }
 
-                mold_udp64_packet_.append_msg({msg.data(), msg.size()});
+                if (mold_udp64_packet_.empty())
+                    first_msg_in_packet_time = time::get_time_ns();
+                mold_udp64_packet_.append_msg(msg);
             }
-            // send the leftover ITCH messages
+            // send the leftover packet
             if (!mold_udp64_packet_.empty()) {
                 send();
             }
 
-            dump_send_times();
+            dump_timestamps();
         }
 
     private:
         Reader reader_;
         UDPSender udp_sender_;
-        uint64_t max_inter_packet_interval_;
-        uint64_t first_timestamp_;
-        uint64_t start_time_;
-        uint64_t last_sent_time_;
+        uint64_t max_msg_delay_;
+        uint64_t first_msg_timestamp_;
         uint64_t seq_num_;
         MoldUDP64Packet mold_udp64_packet_;
         ReaderCheckpoint<Reader> first_msg_checkpoint_;
@@ -87,17 +91,17 @@ namespace nanoparser {
         std::vector<uint64_t> send_times_;
         std::vector<uint64_t> ideal_times_;
 
-        void consume_first_msg_after(uint64_t start) {
+        void seek_to_first_from(uint64_t start) {
             ReadResult<Reader> read_res;
 
             while (!(read_res = reader_.read()).empty()) {
                 auto [msg, checkpoint] = read_res;
                 if (uint64_t timestamp = Itch::get_timestamp(msg.data()); timestamp >= start) {
-                    first_timestamp_ = timestamp;
-                    mold_udp64_packet_.append_msg(msg);
+                    first_msg_timestamp_ = timestamp;
                     return;
                 }
                 first_msg_checkpoint_ = checkpoint;
+                reader_.seek(first_msg_checkpoint_);
             }
         }
 
@@ -105,21 +109,64 @@ namespace nanoparser {
             mold_udp64_packet_.set_seq_num(seq_num_);
             auto sent = mold_udp64_packet_.send(udp_sender_);
             seq_num_ += sent;
-            last_sent_time_ = time::get_time_ns();
             // TRACING
-            send_times_.push_back(last_sent_time_);
+            send_times_.push_back(time::get_time_ns());
         }
 
-        void dump_send_times() const {
+        void record_ideal_times(uint64_t end) {
+            auto initial_checkpoint = reader_.get_current_checkpoint();
+
+            MoldUDP64Packet mock_packet;
+            ReadResult<Reader> read_res;
+            uint64_t first_msg_in_packet_timestamp{};
+            uint64_t prev_msg_timestamp{}; // tracked solely for the EOF case
+
+            while (!(read_res = reader_.read()).empty()) {
+                auto [msg, _] = read_res;
+                uint64_t timestamp = Itch::get_timestamp(msg.data());
+
+                if (timestamp > end) {
+                    if (!mock_packet.empty())
+                        ideal_times_.push_back(std::min(first_msg_in_packet_timestamp + max_msg_delay_, end));
+                    reader_.seek(initial_checkpoint);
+                    return;
+                }
+
+                // TIMEOUT case:
+                if (!mock_packet.empty() && timestamp - first_msg_in_packet_timestamp > max_msg_delay_ ) {
+                    ideal_times_.push_back(first_msg_in_packet_timestamp + max_msg_delay_);
+                    mock_packet.send_mock();
+                // MTU case:
+                } else if (!mock_packet.empty() && msg.size() > mock_packet.bytes_remaining()) {
+                    ideal_times_.push_back(timestamp);
+                    mock_packet.send_mock();
+                }
+
+                if (mock_packet.empty())
+                    first_msg_in_packet_timestamp = timestamp;
+                mock_packet.append_msg(msg);
+                prev_msg_timestamp = timestamp;
+            }
+
+            // EOF case that can only be reached if end >= last timestamp
+            if (!mock_packet.empty()) {
+                ideal_times_.push_back(prev_msg_timestamp);
+            }
+
+            reader_.seek(initial_checkpoint);
+        }
+
+        void dump_timestamps() const {
             std::ofstream f1("/home/illiaderevianko/Desktop/projects/nanoparser/data/send_times",
-                std::ios::binary);
-            std::ofstream f2("/home/illiaderevianko/Desktop/projects/nanoparser/data/ideal_times",
                 std::ios::binary);
             f1.write(reinterpret_cast<const char*>(send_times_.data()),
                     static_cast<std::streamsize>(send_times_.size() * sizeof(uint64_t)));
+            std::ofstream f2("/home/illiaderevianko/Desktop/projects/nanoparser/data/ideal_times",
+                std::ios::binary);
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
-            std::cout << send_times_.size() << std::endl;
+            std::cout << send_times_.size() << " " << send_times_.back() - send_times_.front() << std::endl;
+            std::cout << ideal_times_.size() << " " << ideal_times_.back() - ideal_times_.front() << std::endl;
         }
     };
 }

@@ -41,4 +41,10 @@ namespace nanoparser {
         size_ = kHeaderSize;
         return sent;
     }
+
+    void MoldUDP64Packet::send_mock() {
+        msg_cnt_ = 0;
+        size_ = kHeaderSize;
+    }
+
 }

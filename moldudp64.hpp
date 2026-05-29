@@ -30,6 +30,8 @@ namespace nanoparser {
 
         uint16_t send(UDPSender& udp_sender);
 
+        void send_mock();
+
     private:
         std::array<char, kMaxSize> buf_;
         uint16_t msg_cnt_;

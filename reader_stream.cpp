@@ -50,4 +50,9 @@ namespace nanoparser {
         return {begin_, sentinel_};
     }
 
+    ReaderCheckpoint<ItchFeedReaderStream> ItchFeedReaderStream::get_current_checkpoint() {
+        return {file_.tellg(), sentinel_};
+    }
+
+
 }
