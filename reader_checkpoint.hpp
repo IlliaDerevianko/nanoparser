@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 template<typename Reader>
 class ReaderCheckpoint {
     friend Reader;

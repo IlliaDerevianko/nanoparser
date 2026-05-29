@@ -19,7 +19,7 @@ namespace nanoparser {
 
         ReadResult<ItchFeedReaderMmap> read();
         void prefetch();
-        void seek(ReaderCheckpoint<ItchFeedReaderMmap> checkpoint);
+        void seek(const ReaderCheckpoint<ItchFeedReaderMmap>& checkpoint);
         [[nodiscard]] ReaderCheckpoint<ItchFeedReaderMmap> get_begin_checkpoint() const;
         [[nodiscard]] ReaderCheckpoint<ItchFeedReaderMmap> get_current_checkpoint();
 

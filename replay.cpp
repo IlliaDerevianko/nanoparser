@@ -17,7 +17,7 @@ int main() {
     #endif
 
     const std::string kHistoricalDataPath =
-        "/Users/illiaderevianko/Desktop/c++/nanoparser/data/01302019.NASDAQ_ITCH50";
+        "/home/illia-derevianko/Projects/nanoparser/data/01302019.NASDAQ_ITCH50";
 
     nanoparser::Replayer<nanoparser::ItchFeedReaderMmap> replayer(kHistoricalDataPath);
     const auto period_start = nanoparser::time::hh_mm_ss_to_ns_after_midnight(4, 0, 0);

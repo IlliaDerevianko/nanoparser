@@ -36,7 +36,7 @@ namespace nanoparser {
         // no-op
     }
 
-    void ItchFeedReaderStream::seek(ReaderCheckpoint<ItchFeedReaderStream> checkpoint) {
+    void ItchFeedReaderStream::seek(const ReaderCheckpoint<ItchFeedReaderStream>& checkpoint) {
         if (!checkpoint.is_valid())
             throw std::runtime_error("Use of checkpoint issued by a freed reader");
         if (checkpoint.sentinel_.lock() != sentinel_)

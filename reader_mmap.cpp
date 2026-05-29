@@ -102,7 +102,7 @@ namespace nanoparser {
         mem_locked_ = std::span{aligned, size};
     }
 
-    void ItchFeedReaderMmap::seek(ReaderCheckpoint<ItchFeedReaderMmap> checkpoint) {
+    void ItchFeedReaderMmap::seek(const ReaderCheckpoint<ItchFeedReaderMmap>& checkpoint) {
         if (!checkpoint.is_valid())
             throw std::runtime_error("Use of checkpoint issued by a freed reader");
         if (checkpoint.sentinel_.lock() != sentinel_)
