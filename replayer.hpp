@@ -49,7 +49,7 @@ namespace nanoparser {
                 auto [msg, _] = read_res;
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
                 // force the replayer to stop early if the message's timestamp is after the end
-                auto target_timestamp = std::min(timestamp, end);
+                auto target_timestamp = std::max(std::min(timestamp, end), first_msg_timestamp_);
                 uint64_t now{};
                 // spin until this message is ready to be sent
                 while ((now = time::get_time_ns()) - start_time < target_timestamp - first_msg_timestamp_) {
@@ -165,8 +165,16 @@ namespace nanoparser {
                 std::ios::binary);
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
-            std::cout << send_times_.size() << " " << send_times_.back() - send_times_.front() << std::endl;
-            std::cout << ideal_times_.size() << " " << ideal_times_.back() - ideal_times_.front() << std::endl;
+
+            std::cout << send_times_.size();
+            if (!send_times_.empty())
+                std::cout << " " << (send_times_.back() - send_times_.front());
+            std::cout << std::endl;
+
+            std::cout << ideal_times_.size();
+            if (!ideal_times_.empty())
+                std::cout << " " << (ideal_times_.back() - ideal_times_.front());
+            std::cout << std::endl;
         }
     };
 }
