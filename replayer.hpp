@@ -26,6 +26,7 @@ namespace nanoparser {
             , udp_sender_(config.ip, config.port)
             , max_msg_delay_(config.max_msg_delay)
             , first_msg_timestamp_{}
+            , start_time_{}
             , seq_num_(0)
             , first_msg_checkpoint_(reader_.get_begin_checkpoint())
         {
@@ -43,7 +44,7 @@ namespace nanoparser {
 
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_time{}; // the value is only meaningful if the packet is non-empty
-            uint64_t start_time = time::get_time_ns();
+            start_time_ = time::get_time_ns();
 
             while (!(read_res = reader_.read()).empty()) {
                 auto [msg, _] = read_res;
@@ -52,7 +53,7 @@ namespace nanoparser {
                 auto target_timestamp = std::max(std::min(timestamp, end), first_msg_timestamp_);
                 uint64_t now{};
                 // spin until this message is ready to be sent
-                while ((now = time::get_time_ns()) - start_time < target_timestamp - first_msg_timestamp_) {
+                while ((now = time::get_time_ns()) - start_time_ < target_timestamp - first_msg_timestamp_) {
                     // send the packet if the maximum message delay time (due to coalescing) is exceeded
                     if (!mold_udp64_packet_.empty() && now - first_msg_in_packet_time > max_msg_delay_) {
                         send();
@@ -84,6 +85,7 @@ namespace nanoparser {
         UDPSender udp_sender_;
         uint64_t max_msg_delay_;
         uint64_t first_msg_timestamp_;
+        uint64_t start_time_;
         uint64_t seq_num_;
         MoldUDP64Packet mold_udp64_packet_;
         ReaderCheckpoint<Reader> first_msg_checkpoint_;
@@ -110,7 +112,7 @@ namespace nanoparser {
             auto sent = mold_udp64_packet_.send(udp_sender_);
             seq_num_ += sent;
             // TRACING
-            send_times_.push_back(time::get_time_ns());
+            send_times_.push_back(time::get_time_ns() - start_time_);
         }
 
         void record_ideal_times(uint64_t end) {
@@ -127,18 +129,19 @@ namespace nanoparser {
 
                 if (timestamp > end) {
                     if (!mock_packet.empty())
-                        ideal_times_.push_back(std::min(first_msg_in_packet_timestamp + max_msg_delay_, end));
+                        ideal_times_.push_back(std::min(first_msg_in_packet_timestamp + max_msg_delay_, end) -
+                            first_msg_timestamp_);
                     reader_.seek(initial_checkpoint);
                     return;
                 }
 
                 // TIMEOUT case:
                 if (!mock_packet.empty() && timestamp - first_msg_in_packet_timestamp > max_msg_delay_ ) {
-                    ideal_times_.push_back(first_msg_in_packet_timestamp + max_msg_delay_);
+                    ideal_times_.push_back(first_msg_in_packet_timestamp + max_msg_delay_ - first_msg_timestamp_);
                     mock_packet.send_mock();
                 // MTU case:
                 } else if (!mock_packet.empty() && msg.size() > mock_packet.bytes_remaining()) {
-                    ideal_times_.push_back(timestamp);
+                    ideal_times_.push_back(timestamp - first_msg_timestamp_);
                     mock_packet.send_mock();
                 }
 
@@ -150,18 +153,18 @@ namespace nanoparser {
 
             // EOF case that can only be reached if end >= last timestamp
             if (!mock_packet.empty()) {
-                ideal_times_.push_back(prev_msg_timestamp);
+                ideal_times_.push_back(prev_msg_timestamp - first_msg_timestamp_);
             }
 
             reader_.seek(initial_checkpoint);
         }
 
         void dump_timestamps() const {
-            std::ofstream f1("/home/illiaderevianko/Desktop/projects/nanoparser/data/send_times",
+            std::ofstream f1("/home/illia-derevianko/Projects/nanoparser/data/send_times",
                 std::ios::binary);
             f1.write(reinterpret_cast<const char*>(send_times_.data()),
                     static_cast<std::streamsize>(send_times_.size() * sizeof(uint64_t)));
-            std::ofstream f2("/home/illiaderevianko/Desktop/projects/nanoparser/data/ideal_times",
+            std::ofstream f2("/home/illia-derevianko/Projects/nanoparser/data/ideal_times",
                 std::ios::binary);
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
