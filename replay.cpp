@@ -9,7 +9,7 @@ int main() {
     #ifdef __linux__
         cpu_set_t set;
         CPU_ZERO(&set);
-        CPU_SET(3, &set);
+        CPU_SET(5, &set);
         sched_setaffinity(0, sizeof(set), &set);
 
         sched_param param = { .sched_priority = 99 };
@@ -20,8 +20,8 @@ int main() {
         "/home/illia-derevianko/Projects/nanoparser/data/01302019.NASDAQ_ITCH50";
 
     nanoparser::Replayer<nanoparser::ItchFeedReaderMmap> replayer(kHistoricalDataPath);
-    const auto period_start = nanoparser::time::to_ns_after_midnight(16, 0, 0);
-    const auto period_end = nanoparser::time::to_ns_after_midnight(16, 0, 1);
+    const auto period_start = nanoparser::time::to_ns_after_midnight(4, 0, 0);
+    const auto period_end = nanoparser::time::to_ns_after_midnight(4, 10, 0);
     replayer.replay(period_start, period_end);
     return 0;
 }
