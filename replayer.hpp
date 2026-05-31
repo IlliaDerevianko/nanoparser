@@ -160,11 +160,11 @@ namespace nanoparser {
         }
 
         void dump_timestamps() const {
-            std::ofstream f1("/home/illia-derevianko/Projects/nanoparser/data/send_times",
+            std::ofstream f1("/home/illia-derevianko/Projects/nanoparser/analysis/send_times",
                 std::ios::binary);
             f1.write(reinterpret_cast<const char*>(send_times_.data()),
                     static_cast<std::streamsize>(send_times_.size() * sizeof(uint64_t)));
-            std::ofstream f2("/home/illia-derevianko/Projects/nanoparser/data/ideal_times",
+            std::ofstream f2("/home/illia-derevianko/Projects/nanoparser/analysis/ideal_times",
                 std::ios::binary);
             f2.write(reinterpret_cast<const char*>(ideal_times_.data()),
                     static_cast<std::streamsize>(ideal_times_.size() * sizeof(uint64_t)));
