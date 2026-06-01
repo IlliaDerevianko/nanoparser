@@ -31,20 +31,4 @@ namespace nanoparser {
     bool MoldUDP64Packet::empty() const {
         return size_ == kHeaderSize;
     }
-
-    uint16_t MoldUDP64Packet::send(UDPSender& udp_sender) {
-        const uint16_t msg_cnt_be = std::byteswap(msg_cnt_);
-        memcpy(buf_.data() + kSessionSize + kSequenceNumberSize, &msg_cnt_be, sizeof(msg_cnt_be));
-        udp_sender.send({buf_.data(), size_});
-        auto sent = msg_cnt_;
-        msg_cnt_ = 0;
-        size_ = kHeaderSize;
-        return sent;
-    }
-
-    void MoldUDP64Packet::send_mock() {
-        msg_cnt_ = 0;
-        size_ = kHeaderSize;
-    }
-
 }

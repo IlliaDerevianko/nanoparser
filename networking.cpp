@@ -61,6 +61,10 @@ namespace nanoparser {
             reinterpret_cast<sockaddr*>(&addr_),
             sizeof(addr_));
     }
+
+    void MockUDPSender::send([[maybe_unused]] std::span<const char> buf) {
+        // no-op
+    }
 }
 
 

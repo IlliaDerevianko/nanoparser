@@ -28,9 +28,16 @@ namespace nanoparser {
 
         [[nodiscard]] bool empty() const;
 
-        uint16_t send(UDPSender& udp_sender);
-
-        void send_mock();
+        template<typename Sender>
+        uint16_t send(Sender& sender) {
+            const uint16_t msg_cnt_be = std::byteswap(msg_cnt_);
+            memcpy(buf_.data() + kSessionSize + kSequenceNumberSize, &msg_cnt_be, sizeof(msg_cnt_be));
+            sender.send({buf_.data(), size_});
+            auto sent = msg_cnt_;
+            msg_cnt_ = 0;
+            size_ = kHeaderSize;
+            return sent;
+        }
 
     private:
         std::array<char, kMaxSize> buf_;

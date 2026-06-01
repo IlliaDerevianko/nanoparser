@@ -119,6 +119,7 @@ namespace nanoparser {
             auto initial_checkpoint = reader_.get_current_checkpoint();
 
             MoldUDP64Packet mock_packet;
+            MockUDPSender mock_sender;
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_timestamp{};
             uint64_t prev_msg_timestamp{}; // tracked solely for the EOF case
@@ -138,11 +139,11 @@ namespace nanoparser {
                 // TIMEOUT case:
                 if (!mock_packet.empty() && timestamp - first_msg_in_packet_timestamp > max_msg_delay_ ) {
                     ideal_times_.push_back(first_msg_in_packet_timestamp + max_msg_delay_ - first_msg_timestamp_);
-                    mock_packet.send_mock();
+                    mock_packet.send(mock_sender);
                 // MTU case:
                 } else if (!mock_packet.empty() && msg.size() > mock_packet.bytes_remaining()) {
                     ideal_times_.push_back(timestamp - first_msg_timestamp_);
-                    mock_packet.send_mock();
+                    mock_packet.send(mock_sender);
                 }
 
                 if (mock_packet.empty())

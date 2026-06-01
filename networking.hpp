@@ -22,5 +22,15 @@ namespace nanoparser {
         int sockfd_;
         sockaddr_in addr_;
     };
+
+
+    class MockUDPSender {
+    public:
+        MockUDPSender() = default;
+        MockUDPSender(const MockUDPSender&) = delete;
+        MockUDPSender& operator=(const MockUDPSender&) = delete;
+
+        void send(std::span<const char> buf);
+    };
 }
 
