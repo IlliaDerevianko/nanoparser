@@ -14,8 +14,9 @@
 namespace nanoparser {
     struct ReplayerConfig {
         uint64_t max_msg_delay = 10'000'000;
-        std::string ip = "239.0.0.1";
-        std::uint16_t port = 12345;
+        std::string multicast_ip = "239.0.0.1";
+        std::string src_ip = "10.99.99.1";
+        std::uint16_t dst_port = 12345;
     };
 
     template<typename Reader>
@@ -23,7 +24,7 @@ namespace nanoparser {
     public:
         explicit Replayer(const std::string& data_src_path, const ReplayerConfig& config = ReplayerConfig{})
             : reader_(data_src_path)
-            , udp_sender_(config.ip, config.port)
+            , udp_sender_(config.multicast_ip, config.dst_port, config.src_ip)
             , max_msg_delay_(config.max_msg_delay)
             , first_msg_timestamp_{}
             , start_time_{}

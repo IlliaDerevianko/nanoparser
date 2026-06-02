@@ -10,7 +10,7 @@ namespace nanoparser::networking{
 namespace nanoparser {
     class UDPSender {
     public:
-        UDPSender(std::string_view ip_addr, uint16_t port);
+        UDPSender(std::string_view multicast_ip, uint16_t dst_port, std::string_view src_ip);
         UDPSender(UDPSender&&) noexcept ;
         UDPSender& operator=(UDPSender&&) noexcept;
         UDPSender(const UDPSender&) = delete;
