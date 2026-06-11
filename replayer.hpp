@@ -4,7 +4,9 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <thread>
 
+#include "constants.hpp"
 #include "moldudp64.hpp"
 #include "networking.hpp"
 #include "reader_stream.hpp"
@@ -15,7 +17,7 @@ namespace nanoparser {
     struct ReplayerConfig {
         uint64_t max_msg_delay = 10'000'000;
         std::string multicast_ip = "239.0.0.1";
-        std::string src_ip = "10.99.99.1";
+        std::string src_ip = kTransmitIpAddress;
         std::uint16_t dst_port = 12345;
     };
 
@@ -45,8 +47,22 @@ namespace nanoparser {
 
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_time{}; // the value is only meaningful if the packet is non-empty
-            start_time_ = time::get_time_ns();
+            std::atomic replay_done = false;
+            std::thread ts_consumer_thread = launch_timestamp_consumer_thread(replay_done);
 
+            // cpu_set_t set;
+            // CPU_ZERO(&set);
+            // CPU_SET(5, &set);
+            // if (sched_setaffinity(0, sizeof(set), &set) == -1) {
+            //     std::cerr << "Failed to set affinity" << std::endl;
+            // }
+            //
+            // sched_param param = { .sched_priority = 99 };
+            // if (sched_setscheduler(0, SCHED_FIFO, &param) == -1) {
+            //     std::cerr << "Failed to set priority" << std::endl;
+            // }
+            // Start of the replay
+            start_time_ = time::get_time_ns();
             while (!(read_res = reader_.read()).empty()) {
                 auto [msg, _] = read_res;
                 uint64_t timestamp = Itch::get_timestamp(msg.data());
@@ -77,7 +93,8 @@ namespace nanoparser {
             if (!mold_udp64_packet_.empty()) {
                 send();
             }
-
+            replay_done.store(true, std::memory_order_release);
+            ts_consumer_thread.join();
             dump_timestamps();
         }
 
@@ -113,7 +130,7 @@ namespace nanoparser {
             auto sent = mold_udp64_packet_.send(udp_sender_);
             seq_num_ += sent;
             // TRACING
-            send_times_.push_back(time::get_time_ns() - start_time_);
+            //send_times_.push_back(time::get_time_ns() - start_time_);
         }
 
         void record_ideal_times(uint64_t end) {
@@ -159,6 +176,13 @@ namespace nanoparser {
             }
 
             reader_.seek(initial_checkpoint);
+        }
+
+        std::thread launch_timestamp_consumer_thread(std::atomic<bool>& replay_done) {
+            std::thread t([this, &replay_done]() {
+                udp_sender_.t(replay_done, send_times_);
+            });
+            return t;
         }
 
         void dump_timestamps() const {

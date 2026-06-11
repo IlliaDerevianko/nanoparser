@@ -1,6 +1,8 @@
 #pragma once
 #include <span>
 #include <string>
+#include <atomic>
+#include <vector>
 #include <netinet/in.h>
 
 namespace nanoparser::networking{
@@ -17,6 +19,7 @@ namespace nanoparser {
         UDPSender& operator=(const UDPSender&) = delete;
         ~UDPSender();
         ssize_t send(std::span<const char> buf);
+        void t(std::atomic<bool>&, std::vector<uint64_t>&);
 
     private:
         int sockfd_;

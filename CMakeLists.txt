@@ -26,9 +26,11 @@ set(SOURCES
         reader_mmap.hpp
         reader_mmap.cpp
         read_result.hpp
+        constants.hpp
 )
 
-add_executable(replay ${SOURCES})
+add_executable(replay ${SOURCES}
+        constants.hpp)
 add_executable(receive
         receiver.cpp
         itch.hpp
@@ -36,7 +38,10 @@ add_executable(receive
         moldudp64.hpp
         moldudp64.cpp
         networking.hpp
-        networking.cpp)
+        networking.cpp
+        time.hpp
+        time.cpp
+        constants.hpp)
 
 target_compile_options(replay PRIVATE
         -Wall
@@ -50,8 +55,8 @@ target_compile_options(replay PRIVATE
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(replay PRIVATE -O0 -g -fsanitize=address,undefined)
-    target_link_options(replay PRIVATE -fsanitize=address,undefined)
+    target_compile_options(replay PRIVATE -O0 -g -fsanitize=thread)
+    target_link_options(replay PRIVATE -fsanitize=thread)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(replay PRIVATE -O3 -march=native)
 endif()

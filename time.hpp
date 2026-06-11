@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-
+#include <ctime>
 
 namespace nanoparser::time {
     constexpr uint64_t sec_to_nsec = 1'000'000'000;
@@ -11,6 +11,7 @@ namespace nanoparser::time {
 
     uint64_t get_time_ns();
     uint64_t to_ns_after_midnight(unsigned hh, unsigned mm, unsigned ss = 0, unsigned ms = 0);
+    uint64_t timespec_to_ns(timespec ts);
 }
 
 
