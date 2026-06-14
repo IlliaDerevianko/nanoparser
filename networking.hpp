@@ -33,7 +33,7 @@ namespace nanoparser {
         MockUDPSender(const MockUDPSender&) = delete;
         MockUDPSender& operator=(const MockUDPSender&) = delete;
 
-        void send(std::span<const char> buf);
+        void Send(std::span<const char> buf);
     };
 }
 

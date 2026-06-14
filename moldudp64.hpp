@@ -29,10 +29,10 @@ namespace nanoparser {
         [[nodiscard]] bool empty() const;
 
         template<typename Sender>
-        uint16_t send(Sender& sender) {
+        uint16_t Send(Sender& sender) {
             const uint16_t msg_cnt_be = std::byteswap(msg_cnt_);
             memcpy(buf_.data() + kSessionSize + kSequenceNumberSize, &msg_cnt_be, sizeof(msg_cnt_be));
-            sender.send({buf_.data(), size_});
+            sender.Send({buf_.data(), size_});
             auto sent = msg_cnt_;
             msg_cnt_ = 0;
             size_ = kHeaderSize;

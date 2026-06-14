@@ -107,7 +107,7 @@ namespace nanoparser {
             sizeof(addr_));
     }
 
-    void MockUDPSender::send([[maybe_unused]] std::span<const char> buf) {
+    void MockUDPSender::Send([[maybe_unused]] std::span<const char> buf) {
         // no-op
     }
 

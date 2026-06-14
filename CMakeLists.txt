@@ -27,12 +27,18 @@ set(SOURCES
         reader_mmap.cpp
         read_result.hpp
         constants.hpp
+        src/networking/udp_socket.cpp
+        src/networking/udp_socket.hpp
+        src/networking/tx_udp_socket.cpp
+        src/networking/tx_udp_socket.hpp
+        src/networking/message_header.hpp
+        src/networking/cmsg_handlers.cpp
+        src/networking/cmsg_handlers.hpp
 )
 
-add_executable(replay ${SOURCES}
-        constants.hpp)
+add_executable(replay ${SOURCES})
 add_executable(receive
-        receiver.cpp
+        receive.cpp
         itch.hpp
         itch.cpp
         moldudp64.hpp
@@ -41,7 +47,16 @@ add_executable(receive
         networking.cpp
         time.hpp
         time.cpp
-        constants.hpp)
+        constants.hpp
+        src/networking/rx_udp_socket.cpp
+        src/networking/rx_udp_socket.hpp
+        src/networking/udp_socket.cpp
+        src/networking/udp_socket.hpp
+        receiver.cpp
+        receiver.hpp
+        src/networking/message_header.hpp
+        src/networking/cmsg_handlers.cpp
+        src/networking/cmsg_handlers.hpp)
 
 target_compile_options(replay PRIVATE
         -Wall

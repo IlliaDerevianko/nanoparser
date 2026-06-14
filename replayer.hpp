@@ -12,6 +12,9 @@
 #include "reader_stream.hpp"
 #include "reader_mmap.hpp"
 #include "time.hpp"
+#include "src/networking/message_header.hpp"
+#include "src/networking/rx_udp_socket.hpp"
+#include "src/networking/tx_udp_socket.hpp"
 
 namespace nanoparser {
     struct ReplayerConfig {
@@ -26,12 +29,13 @@ namespace nanoparser {
     public:
         explicit Replayer(const std::string& data_src_path, const ReplayerConfig& config = ReplayerConfig{})
             : reader_(data_src_path)
-            , udp_sender_(config.multicast_ip, config.dst_port, config.src_ip)
+            , socket_(config.src_ip, config.multicast_ip, config.dst_port)
             , max_msg_delay_(config.max_msg_delay)
             , first_msg_timestamp_{}
             , start_time_{}
             , seq_num_(0)
             , first_msg_checkpoint_(reader_.get_begin_checkpoint())
+            , is_replay_completed_(false)
         {
             constexpr std::array kSession = {'0', '1', '3', '0', '2', '0', '1', '9', ' ', ' '};
             mold_udp64_packet_.set_session(kSession);
@@ -48,7 +52,7 @@ namespace nanoparser {
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_time{}; // the value is only meaningful if the packet is non-empty
             std::atomic replay_done = false;
-            std::thread ts_consumer_thread = launch_timestamp_consumer_thread(replay_done);
+            //std::thread ts_consumer_thread = launch_timestamp_consumer_thread(replay_done);
 
             // cpu_set_t set;
             // CPU_ZERO(&set);
@@ -94,19 +98,21 @@ namespace nanoparser {
                 send();
             }
             replay_done.store(true, std::memory_order_release);
-            ts_consumer_thread.join();
+            is_replay_completed_.store(true, std::memory_order_release);
+            //ts_consumer_thread.join();
             dump_timestamps();
         }
 
     private:
         Reader reader_;
-        UDPSender udp_sender_;
+        TxUdpSocket socket_;
         uint64_t max_msg_delay_;
         uint64_t first_msg_timestamp_;
         uint64_t start_time_;
         uint64_t seq_num_;
         MoldUDP64Packet mold_udp64_packet_;
         ReaderCheckpoint<Reader> first_msg_checkpoint_;
+        std::atomic<bool> is_replay_completed_;
         // TRACING
         std::vector<uint64_t> send_times_;
         std::vector<uint64_t> ideal_times_;
@@ -127,7 +133,7 @@ namespace nanoparser {
 
         void send() {
             mold_udp64_packet_.set_seq_num(seq_num_);
-            auto sent = mold_udp64_packet_.send(udp_sender_);
+            auto sent = mold_udp64_packet_.Send(socket_);
             seq_num_ += sent;
             // TRACING
             //send_times_.push_back(time::get_time_ns() - start_time_);
@@ -157,11 +163,11 @@ namespace nanoparser {
                 // TIMEOUT case:
                 if (!mock_packet.empty() && timestamp - first_msg_in_packet_timestamp > max_msg_delay_ ) {
                     ideal_times_.push_back(first_msg_in_packet_timestamp + max_msg_delay_ - first_msg_timestamp_);
-                    mock_packet.send(mock_sender);
+                    mock_packet.Send(mock_sender);
                 // MTU case:
                 } else if (!mock_packet.empty() && msg.size() > mock_packet.bytes_remaining()) {
                     ideal_times_.push_back(timestamp - first_msg_timestamp_);
-                    mock_packet.send(mock_sender);
+                    mock_packet.Send(mock_sender);
                 }
 
                 if (mock_packet.empty())
@@ -178,12 +184,23 @@ namespace nanoparser {
             reader_.seek(initial_checkpoint);
         }
 
-        std::thread launch_timestamp_consumer_thread(std::atomic<bool>& replay_done) {
-            std::thread t([this, &replay_done]() {
-                udp_sender_.t(replay_done, send_times_);
-            });
-            return t;
-        }
+        // std::thread launch_timestamp_consumer_thread(std::atomic<bool>& replay_done) {
+        //     std::thread t([this, &replay_done]() {
+        //         udp_sender_.t(replay_done, send_times_);
+        //     });
+        //     return t;
+        // }
+
+        // std::thread launch_timestamp_gatherer() {
+        //     std::thread t([this] () {
+        //         RxUdpSocket socket("", "", 0);
+        //         MessageHeaderNoPayload msg_header;
+        //         Poller poller;
+        //         while (!is_replay_completed_.load(std::memory_order_acquire)) {
+        //             poller.poll()
+        //         }
+        //     });
+        // }
 
         void dump_timestamps() const {
             std::ofstream f1("/home/illia-derevianko/Projects/nanoparser/analysis/send_times",
