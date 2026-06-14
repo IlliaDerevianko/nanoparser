@@ -11,7 +11,7 @@ int main() {
 
     nanoparser::Replayer<nanoparser::ItchFeedReaderMmap> replayer(kHistoricalDataPath);
     const auto period_start = nanoparser::time::to_ns_after_midnight(4, 0, 0);
-    const auto period_end = nanoparser::time::to_ns_after_midnight(4, 0, 3);
+    const auto period_end = nanoparser::time::to_ns_after_midnight(4, 0, 5);
     replayer.replay(period_start, period_end);
     return 0;
 }

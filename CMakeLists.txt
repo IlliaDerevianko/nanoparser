@@ -15,8 +15,8 @@ set(SOURCES
         itch.cpp
         moldudp64.hpp
         moldudp64.cpp
-        networking.hpp
-        networking.cpp
+        src/networking/null_tx_udp_socket.hpp
+        src/networking/null_tx_udp_socket.cpp
         reader_checkpoint.hpp
         reader_stream.hpp
         reader_stream.cpp
@@ -34,6 +34,8 @@ set(SOURCES
         src/networking/message_header.hpp
         src/networking/cmsg_handlers.cpp
         src/networking/cmsg_handlers.hpp
+        src/networking/poller.cpp
+        src/networking/poller.hpp
 )
 
 add_executable(replay ${SOURCES})
@@ -43,8 +45,8 @@ add_executable(receive
         itch.cpp
         moldudp64.hpp
         moldudp64.cpp
-        networking.hpp
-        networking.cpp
+        src/networking/null_tx_udp_socket.hpp
+        src/networking/null_tx_udp_socket.cpp
         time.hpp
         time.cpp
         constants.hpp

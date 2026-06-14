@@ -3,8 +3,6 @@
 #include <cstring>
 #include <iostream>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <net/if.h>
 #include <sys/socket.h>
 
 namespace nanoparser {

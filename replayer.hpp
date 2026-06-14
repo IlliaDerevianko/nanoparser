@@ -8,11 +8,13 @@
 
 #include "constants.hpp"
 #include "moldudp64.hpp"
-#include "networking.hpp"
+#include "src/networking/null_tx_udp_socket.hpp"
 #include "reader_stream.hpp"
 #include "reader_mmap.hpp"
 #include "time.hpp"
+#include "src/networking/cmsg_handlers.hpp"
 #include "src/networking/message_header.hpp"
+#include "src/networking/poller.hpp"
 #include "src/networking/rx_udp_socket.hpp"
 #include "src/networking/tx_udp_socket.hpp"
 
@@ -39,6 +41,7 @@ namespace nanoparser {
         {
             constexpr std::array kSession = {'0', '1', '3', '0', '2', '0', '1', '9', ' ', ' '};
             mold_udp64_packet_.set_session(kSession);
+            socket_.EnableTxHwTimestamping(kTransmitInterface);
             // TRACING
             send_times_.reserve(20'000);
             ideal_times_.reserve(20'000);
@@ -51,8 +54,7 @@ namespace nanoparser {
 
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_time{}; // the value is only meaningful if the packet is non-empty
-            std::atomic replay_done = false;
-            //std::thread ts_consumer_thread = launch_timestamp_consumer_thread(replay_done);
+            std::thread ts_consumer_thread = launch_timestamp_gatherer();
 
             // cpu_set_t set;
             // CPU_ZERO(&set);
@@ -97,9 +99,8 @@ namespace nanoparser {
             if (!mold_udp64_packet_.empty()) {
                 send();
             }
-            replay_done.store(true, std::memory_order_release);
             is_replay_completed_.store(true, std::memory_order_release);
-            //ts_consumer_thread.join();
+            ts_consumer_thread.join();
             dump_timestamps();
         }
 
@@ -143,7 +144,7 @@ namespace nanoparser {
             auto initial_checkpoint = reader_.get_current_checkpoint();
 
             MoldUDP64Packet mock_packet;
-            MockUDPSender mock_sender;
+            NullTxUdpSocket mock_sender;
             ReadResult<Reader> read_res;
             uint64_t first_msg_in_packet_timestamp{};
             uint64_t prev_msg_timestamp{}; // tracked solely for the EOF case
@@ -184,23 +185,35 @@ namespace nanoparser {
             reader_.seek(initial_checkpoint);
         }
 
-        // std::thread launch_timestamp_consumer_thread(std::atomic<bool>& replay_done) {
-        //     std::thread t([this, &replay_done]() {
-        //         udp_sender_.t(replay_done, send_times_);
-        //     });
-        //     return t;
-        // }
-
-        // std::thread launch_timestamp_gatherer() {
-        //     std::thread t([this] () {
-        //         RxUdpSocket socket("", "", 0);
-        //         MessageHeaderNoPayload msg_header;
-        //         Poller poller;
-        //         while (!is_replay_completed_.load(std::memory_order_acquire)) {
-        //             poller.poll()
-        //         }
-        //     });
-        // }
+        std::thread launch_timestamp_gatherer() {
+            using namespace std::chrono_literals;
+            std::thread t([this] () {
+                MessageHeaderNoPayload msg_header;
+                Poller poller(socket_);
+                bool is_last_pass = false;
+                while (true) {
+                    poller.Poll(100ms);
+                    while (true) {
+                        auto result = socket_.ReceiveErrQueueMsg(msg_header);
+                        if (!result.has_value()) {
+                            if (result.error() == RecvStatus::UnknownFatal) {
+                                throw std::runtime_error("recvmsg failed");
+                            }
+                            break;
+                        }
+                        TimestampExtractor ts_extractor{};
+                        msg_header.ForEachCmsg(ts_extractor);
+                        send_times_.push_back(ts_extractor.timestamp);
+                    }
+                    if (is_last_pass)
+                        break;
+                    if (is_replay_completed_.load(std::memory_order_acquire)) {
+                        is_last_pass = true;
+                    }
+                }
+            });
+            return t;
+        }
 
         void dump_timestamps() const {
             std::ofstream f1("/home/illia-derevianko/Projects/nanoparser/analysis/send_times",

@@ -8,3 +8,7 @@ namespace nanoparser {
     constexpr std::string kReceiveInterface = "enp1s0f1";
     constexpr std::string kReceiveIpAddress = "10.99.99.2";
 }
+
+namespace nanoparser::networking{
+    constexpr size_t kMaxUdpPayload = 1472;
+}

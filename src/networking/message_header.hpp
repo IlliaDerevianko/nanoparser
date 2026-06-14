@@ -3,7 +3,7 @@
 #include <cstring>
 #include <sys/socket.h>
 
-#include "../../networking.hpp"
+#include "../../constants.hpp"
 // TODO: consider move/copy semantics
 namespace nanoparser {
     template<std::size_t DataBufSize = networking::kMaxUdpPayload, std::size_t CtrlBufSize = 512>
@@ -40,7 +40,8 @@ namespace nanoparser {
         alignas(cmsghdr) char ctrl_buf_[CtrlBufSize];
     };
 
-    using MessageHeaderNoPayload = MessageHeader<1>;
+    template <std::size_t CtrlBufSize = 512>
+    using MessageHeaderNoPayload = MessageHeader<1, CtrlBufSize>;
 }
 
 

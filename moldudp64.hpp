@@ -2,8 +2,9 @@
 #include <array>
 #include <cstring>
 #include <span>
+#include <cstdint>
 
-#include "networking.hpp"
+#include "constants.hpp"
 
 
 namespace nanoparser {

@@ -18,7 +18,7 @@ namespace nanoparser {
         // Loop continues as long as message inter-arrival time stays within the timeout.
         while (true) {
             msg_header.ResetCtrlBuf();
-            if (auto recv_res = socket.Receive(msg_header); !recv_res.has_value()) {
+            if (auto recv_res = socket.ReceiveMsg(msg_header); !recv_res.has_value()) {
                 if (recv_res.error() == RecvStatus::NoDataAvailable) {
                     // Loop keeps spinning if no messages have been received yet.
                     if (timestamps_.empty()) continue;
