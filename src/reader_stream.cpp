@@ -8,7 +8,7 @@
 #include "moldudp64.hpp"
 
 namespace nanoparser {
-    ItchFeedReaderStream::ItchFeedReaderStream(const std::string& path)
+    ItchFeedReaderStream::ItchFeedReaderStream(const std::filesystem::path& path)
         : file_(path.c_str(), std::ios::binary)
         , buf_{}
         , sentinel_(std::make_shared<int>(0))

@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <filesystem>
 #include <fstream>
 
 #include "itch.hpp"
@@ -9,7 +10,7 @@ namespace nanoparser {
     class ItchFeedReaderStream {
     public:
         using Position = std::streampos;
-        explicit ItchFeedReaderStream(const std::string& path);
+        explicit ItchFeedReaderStream(const std::filesystem::path& path);
 
         ReadResult<ItchFeedReaderStream> read();
         void prefetch();

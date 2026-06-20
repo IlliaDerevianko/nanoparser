@@ -1,7 +1,6 @@
 #pragma once
 #include <chrono>
 #include <expected>
-#include <iostream>
 #include <string>
 
 #include "message_header.hpp"

@@ -5,12 +5,9 @@
 
 
 namespace nanoparser {
-
-
     void NullTxUdpSocket::Send([[maybe_unused]] std::span<const char> buf) {
         // no-op
     }
-
 }
 
 

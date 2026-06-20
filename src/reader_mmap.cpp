@@ -1,7 +1,6 @@
 #include "reader_mmap.hpp"
 
 #include <bit>
-#include <cstdint>
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
@@ -15,7 +14,7 @@
 
 
 namespace nanoparser {
-    ItchFeedReaderMmap::ItchFeedReaderMmap(const std::string& path)
+    ItchFeedReaderMmap::ItchFeedReaderMmap(const std::filesystem::path& path)
         : offset_(0)
         , sentinel_(std::make_shared<int>(0))
     {

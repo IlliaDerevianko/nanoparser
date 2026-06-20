@@ -3,7 +3,8 @@
 #include <cstring>
 #include <sys/socket.h>
 
-#include "../constants.hpp"
+#include "constants.hpp"
+
 // TODO: consider move/copy semantics
 namespace nanoparser {
     template<std::size_t DataBufSize = networking::kMaxUdpPayload, std::size_t CtrlBufSize = 512>

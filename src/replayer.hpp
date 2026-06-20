@@ -6,7 +6,6 @@
 #include <vector>
 #include <thread>
 
-#include "constants.hpp"
 #include "moldudp64.hpp"
 #include "networking/null_tx_udp_socket.hpp"
 #include "reader_stream.hpp"
@@ -20,16 +19,17 @@
 
 namespace nanoparser {
     struct ReplayerConfig {
-        uint64_t max_msg_delay = 10'000'000;
-        std::string multicast_ip = "239.0.0.1";
-        std::string src_ip = kTransmitIpAddress;
-        std::uint16_t dst_port = 12345;
+        uint64_t max_msg_delay;
+        std::string multicast_ip;
+        std::string src_ip;
+        std::uint16_t dst_port;
+        std::string tx_interface;
     };
 
     template<typename Reader>
     class Replayer {
     public:
-        explicit Replayer(const std::string& data_src_path, const ReplayerConfig& config = ReplayerConfig{})
+        explicit Replayer(const std::filesystem::path& data_src_path, const ReplayerConfig& config)
             : reader_(data_src_path)
             , socket_(config.src_ip, config.multicast_ip, config.dst_port)
             , max_msg_delay_(config.max_msg_delay)
@@ -41,10 +41,10 @@ namespace nanoparser {
         {
             constexpr std::array kSession = {'0', '1', '3', '0', '2', '0', '1', '9', ' ', ' '};
             mold_udp64_packet_.set_session(kSession);
-            socket_.EnableTxHwTimestamping(kTransmitInterface);
+            socket_.EnableTxHwTimestamping(config.tx_interface);
             // TRACING
-            send_times_.reserve(20'000);
-            ideal_times_.reserve(20'000);
+            send_times_.reserve(kExpectedTimestampCount);
+            ideal_times_.reserve(kExpectedTimestampCount);
         }
 
         void replay(uint64_t start = 0, uint64_t end = std::numeric_limits<uint64_t>::max()) {
@@ -105,6 +105,8 @@ namespace nanoparser {
         }
 
     private:
+        static constexpr int kExpectedTimestampCount = 20'000;
+
         Reader reader_;
         TxUdpSocket socket_;
         uint64_t max_msg_delay_;

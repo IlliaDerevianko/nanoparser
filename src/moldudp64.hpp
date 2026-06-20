@@ -4,7 +4,7 @@
 #include <span>
 #include <cstdint>
 
-#include "constants.hpp"
+#include "networking/constants.hpp"
 
 
 namespace nanoparser {

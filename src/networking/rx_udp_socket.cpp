@@ -9,8 +9,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include "message_header.hpp"
-
 namespace nanoparser {
     RxUdpSocket::RxUdpSocket(const std::string& dst_ip, const std::string& multicast_group_ip, uint16_t port) {
         // Enable port reuse for multicast connections.

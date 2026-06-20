@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <memory>
 #include <span>
 
@@ -9,7 +10,7 @@ namespace nanoparser {
     class ItchFeedReaderMmap {
     public:
         using Position = size_t;
-        explicit ItchFeedReaderMmap(const std::string& path);
+        explicit ItchFeedReaderMmap(const std::filesystem::path& path);
         ItchFeedReaderMmap(const ItchFeedReaderMmap&) = delete;
         ItchFeedReaderMmap operator=(const ItchFeedReaderMmap&) = delete;
         ItchFeedReaderMmap(ItchFeedReaderMmap&&) noexcept ;

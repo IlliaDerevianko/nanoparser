@@ -9,7 +9,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
 
-set(SOURCES
+
+add_executable(replay
         src/replay.cpp
         src/itch.hpp
         src/itch.cpp
@@ -26,7 +27,6 @@ set(SOURCES
         src/reader_mmap.hpp
         src/reader_mmap.cpp
         src/read_result.hpp
-        src/constants.hpp
         src/networking/udp_socket.cpp
         src/networking/udp_socket.hpp
         src/networking/tx_udp_socket.cpp
@@ -36,9 +36,10 @@ set(SOURCES
         src/networking/cmsg_handlers.hpp
         src/networking/poller.cpp
         src/networking/poller.hpp
-)
+        include/dotenv.h
+        src/networking/constants.hpp
+        src/config.hpp)
 
-add_executable(replay ${SOURCES})
 add_executable(receive
         src/receive.cpp
         src/itch.hpp
@@ -49,7 +50,6 @@ add_executable(receive
         src/networking/null_tx_udp_socket.cpp
         src/time.hpp
         src/time.cpp
-        src/constants.hpp
         src/networking/rx_udp_socket.cpp
         src/networking/rx_udp_socket.hpp
         src/networking/udp_socket.cpp
@@ -58,7 +58,10 @@ add_executable(receive
         src/receiver.hpp
         src/networking/message_header.hpp
         src/networking/cmsg_handlers.cpp
-        src/networking/cmsg_handlers.hpp)
+        src/networking/cmsg_handlers.hpp
+        include/dotenv.h
+        src/networking/constants.hpp
+        src/config.hpp)
 
 target_compile_options(replay PRIVATE
         -Wall
@@ -70,6 +73,9 @@ target_compile_options(replay PRIVATE
         -Wsign-conversion
         -Wnull-dereference
 )
+
+target_include_directories(replay PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(receive PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(replay PRIVATE -O0 -g -fsanitize=thread)
