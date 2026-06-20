@@ -10,23 +10,23 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(SOURCES
-        replay.cpp
-        itch.hpp
-        itch.cpp
-        moldudp64.hpp
-        moldudp64.cpp
+        src/replay.cpp
+        src/itch.hpp
+        src/itch.cpp
+        src/moldudp64.hpp
+        src/moldudp64.cpp
         src/networking/null_tx_udp_socket.hpp
         src/networking/null_tx_udp_socket.cpp
-        reader_checkpoint.hpp
-        reader_stream.hpp
-        reader_stream.cpp
-        replayer.hpp
-        time.hpp
-        time.cpp
-        reader_mmap.hpp
-        reader_mmap.cpp
-        read_result.hpp
-        constants.hpp
+        src/reader_checkpoint.hpp
+        src/reader_stream.hpp
+        src/reader_stream.cpp
+        src/replayer.hpp
+        src/time.hpp
+        src/time.cpp
+        src/reader_mmap.hpp
+        src/reader_mmap.cpp
+        src/read_result.hpp
+        src/constants.hpp
         src/networking/udp_socket.cpp
         src/networking/udp_socket.hpp
         src/networking/tx_udp_socket.cpp
@@ -40,22 +40,22 @@ set(SOURCES
 
 add_executable(replay ${SOURCES})
 add_executable(receive
-        receive.cpp
-        itch.hpp
-        itch.cpp
-        moldudp64.hpp
-        moldudp64.cpp
+        src/receive.cpp
+        src/itch.hpp
+        src/itch.cpp
+        src/moldudp64.hpp
+        src/moldudp64.cpp
         src/networking/null_tx_udp_socket.hpp
         src/networking/null_tx_udp_socket.cpp
-        time.hpp
-        time.cpp
-        constants.hpp
+        src/time.hpp
+        src/time.cpp
+        src/constants.hpp
         src/networking/rx_udp_socket.cpp
         src/networking/rx_udp_socket.hpp
         src/networking/udp_socket.cpp
         src/networking/udp_socket.hpp
-        receiver.cpp
-        receiver.hpp
+        src/receiver.cpp
+        src/receiver.hpp
         src/networking/message_header.hpp
         src/networking/cmsg_handlers.cpp
         src/networking/cmsg_handlers.hpp)

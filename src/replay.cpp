@@ -1,6 +1,5 @@
 #include <fstream>
 #include <string>
-#include <sched.h>
 
 #include "replayer.hpp"
 #include "time.hpp"

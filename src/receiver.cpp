@@ -4,8 +4,8 @@
 
 
 #include "constants.hpp"
-#include "src/networking/cmsg_handlers.hpp"
-#include "src/networking/rx_udp_socket.hpp"
+#include "networking/cmsg_handlers.hpp"
+#include "networking/rx_udp_socket.hpp"
 
 namespace nanoparser {
     void Receiver::Receive(const std::chrono::milliseconds timeout) {

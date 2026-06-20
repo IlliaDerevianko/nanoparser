@@ -8,15 +8,15 @@
 
 #include "constants.hpp"
 #include "moldudp64.hpp"
-#include "src/networking/null_tx_udp_socket.hpp"
+#include "networking/null_tx_udp_socket.hpp"
 #include "reader_stream.hpp"
 #include "reader_mmap.hpp"
 #include "time.hpp"
-#include "src/networking/cmsg_handlers.hpp"
-#include "src/networking/message_header.hpp"
-#include "src/networking/poller.hpp"
-#include "src/networking/rx_udp_socket.hpp"
-#include "src/networking/tx_udp_socket.hpp"
+#include "networking/cmsg_handlers.hpp"
+#include "networking/message_header.hpp"
+#include "networking/poller.hpp"
+#include "networking/rx_udp_socket.hpp"
+#include "networking/tx_udp_socket.hpp"
 
 namespace nanoparser {
     struct ReplayerConfig {

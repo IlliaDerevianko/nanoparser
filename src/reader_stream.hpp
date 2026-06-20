@@ -1,7 +1,6 @@
 #pragma once
 #include <array>
 #include <fstream>
-#include <span>
 
 #include "itch.hpp"
 #include "read_result.hpp"

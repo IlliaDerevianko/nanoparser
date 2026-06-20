@@ -1,5 +1,5 @@
 #include "receiver.hpp"
-#include "src/networking/rx_udp_socket.hpp"
+#include "networking/rx_udp_socket.hpp"
 
 int main() {
     using namespace std::chrono_literals;
