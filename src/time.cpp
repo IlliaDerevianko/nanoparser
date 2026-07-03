@@ -6,7 +6,7 @@
 namespace nanoparser::time {
     uint64_t get_time_ns() {
         std::timespec ts{};
-        clock_gettime(CLOCK_MONOTONIC, &ts);
+        clock_gettime(CLOCK_REALTIME, &ts);
         return timespec_to_ns(ts);
     }
 

@@ -15,11 +15,13 @@ namespace nanoparser {
 
     class Receiver {
     public:
-        explicit Receiver(ReceiverConfig config);
+        explicit Receiver(const ReceiverConfig& config);
         void Receive();
         void DumpTimestamps() const;
     private:
+        static constexpr int kExpectedTimestampCount = 20'000;
         RxUdpSocket socket_;
-        std::vector<uint64_t> timestamps_;
+        std::vector<uint64_t> rx_hw_timestamps_;
+        std::vector<uint64_t> receive_app_timestamps_;
     };
 }
