@@ -21,7 +21,6 @@ namespace nanoparser {
     private:
         static constexpr int kExpectedTimestampCount = 20'000;
         RxUdpSocket socket_;
-        std::vector<uint64_t> rx_hw_timestamps_;
-        std::vector<uint64_t> receive_app_timestamps_;
+        std::vector<std::array<uint64_t, 2>> timestamps_;
     };
 }
