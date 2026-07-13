@@ -13,13 +13,12 @@ namespace nanoparser {
         : socket_(config.dst_ip, config.multicast_ip, config.dst_port)
     {
         socket_.EnableRxHwTimestamping(config.rx_interface);
-        socket_.SetReceiveTimeout(config.timeout);
+        timeout_ = std::chrono::duration_cast<std::chrono::nanoseconds>(config.timeout).count();
         timestamps_.reserve(kExpectedTimestampCount);
     }
 
     void Receiver::Receive() {
         MessageHeader msg_header;
-        // Loop continues as long as message inter-arrival time stays within the timeout.
         while (true) {
             msg_header.ResetCtrlBuf();
             if (auto recv_res = socket_.ReceiveMsg(msg_header); recv_res.has_value()) {
@@ -29,8 +28,8 @@ namespace nanoparser {
                 timestamps_.push_back({ts_extractor.timestamp, receive_timestamp});
             } else {
                 if (recv_res.error() == RecvStatus::NoDataAvailable) {
-                    // Loop keeps spinning if no messages have been received yet.
-                    if (timestamps_.empty()) continue;
+                    // Loop keeps spinning if no messages have been received or inter-arrival time is within the limit.
+                    if (timestamps_.empty() || time::get_time_ns() < timeout_ + timestamps_.back()[1]) continue;
                     break;
                 }
                 throw std::runtime_error("failed to receive a message");

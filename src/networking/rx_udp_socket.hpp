@@ -16,7 +16,7 @@ namespace nanoparser {
 
         template<size_t DataBufSize, size_t CtrlBufSize>
         std::expected<ssize_t, RecvStatus> ReceiveMsg(MessageHeader<DataBufSize, CtrlBufSize>& msg_header) {
-            return Receive(msg_header, 0);
+            return Receive(msg_header, MSG_DONTWAIT);
         }
     };
 }
